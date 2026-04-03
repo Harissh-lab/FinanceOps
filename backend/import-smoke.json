@@ -1,0 +1,9 @@
+[
+  {
+    "amount": 1250,
+    "type": "INCOME",
+    "category": "Freelance",
+    "date": "2026-04-03",
+    "notes": "Import smoke test"
+  }
+]
