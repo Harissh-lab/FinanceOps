@@ -61,27 +61,28 @@ My company/
 |-- scripts/                       # PowerShell automation (setup/start/verify)
 |-- README.md                      # Project overview and setup guide
 |-- APP_RUN_PROCEDURE.md           # Beginner-friendly runbook
+|-- APP_USER_TUTORIAL.md           # End-to-end UI usage walkthrough
 |-- API_REFERENCE.md               # Full API endpoint reference
 `-- CONTRIBUTING.md                # Contribution workflow and conventions
 ```
+
+Detailed product walkthrough: [APP_USER_TUTORIAL.md](APP_USER_TUTORIAL.md)
 
 ## Quick Setup
 
 ### Prerequisites
 - Node.js 18+
 - npm 9+
-- PostgreSQL database (free cloud option below)
+- PostgreSQL (local)
 
-### Step 1 — Get a free PostgreSQL database
-Instructions for Neon.tech:
-- Go to https://neon.tech and sign up free
-- Create a new project called financeops
-- Copy the connection string
-- Format: postgresql://user:pass@ep-xxx.neon.tech/neondb
+### Step 1 — Configure PostgreSQL
+- Create a local database named `finance_app`
+- Use this connection string format in `.env`:
+	`postgresql://postgres:postgres@localhost:5432/finance_app?schema=public`
 
 ### Step 2 — Clone the repository
 ```bash
-git clone https://github.com/financeops/financeops.git
+git clone https://github.com/Harissh-lab/FinanceOps.git
 cd "My company"
 ```
 
@@ -193,11 +194,12 @@ npm run dev
 | CORS_ORIGIN | Yes | Comma-separated allowed frontend origins | http://localhost:5173,http://localhost:5174 |
 
 ## Testing Password Reset Flow
-1. Go to https://ethereal.email/create and create SMTP test credentials (optional enhancement for email preview).
-2. Add SMTP credentials to your email service integration if you wire Nodemailer in your environment.
-3. In current FinanceOps codebase, trigger forgot password from UI at /forgot-password.
-4. Check backend terminal logs for the reset token line: `[DEV] Password reset token for viewer@finance.com: abc123...`.
-5. Copy token, submit reset-password form with new password, and log in again.
+1. Open Forgot Password page at `/forgot-password`.
+2. Submit an existing seeded user email (example: `viewer@finance.com`).
+3. Check backend terminal log for: `[DEV] Password reset token for viewer@finance.com: <token>`.
+4. Copy the latest token value.
+5. Submit Reset Password form with token and new password.
+6. Login with the new password.
 
 ## Running Tests
 Backend test command:
