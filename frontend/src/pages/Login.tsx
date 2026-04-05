@@ -31,8 +31,10 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginValues) => {
     try {
       setFormError(null);
-      await login(values.email, values.password);
-      navigate(location.state?.from?.pathname ?? '/dashboard', { replace: true });
+      const loggedInUser = await login(values.email, values.password);
+      const fallbackPath =
+        loggedInUser.role === 'ADMIN' || loggedInUser.role === 'ANALYST' ? '/reports' : '/dashboard';
+      navigate(location.state?.from?.pathname ?? fallbackPath, { replace: true });
     } catch {
       setFormError('Invalid credentials. Please check email and password.');
     }

@@ -1,4 +1,4 @@
-import { BarChart3, FileText, LayoutDashboard, LogOut, Users } from 'lucide-react';
+import { BarChart3, FileClock, FileText, LayoutDashboard, LogOut, Users } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
@@ -8,6 +8,7 @@ import { cn } from '../lib/utils';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/reports', label: 'Reports', icon: FileClock, roles: ['ANALYST', 'ADMIN'] },
   { to: '/records', label: 'Records', icon: FileText, roles: ['ANALYST', 'ADMIN'] },
   { to: '/analytics', label: 'Analytics', icon: BarChart3, roles: ['ANALYST', 'ADMIN'] },
   { to: '/users', label: 'Users', icon: Users, adminOnly: true },

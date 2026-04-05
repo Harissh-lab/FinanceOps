@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { AxiosError } from 'axios';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EmptyState } from '../components/EmptyState';
 import { Button } from '../components/ui/button';
@@ -31,6 +32,8 @@ const initialForm = {
 
 export default function RecordsPage() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchInput, setSearchInput] = useState('');
   const [filters, setFilters] = useState<Filters>({
     type: '',
     category: '',
@@ -50,6 +53,26 @@ export default function RecordsPage() {
 
   const canCreate = user?.role === 'ADMIN' || user?.role === 'ANALYST';
   const canEdit = user?.role === 'ADMIN';
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1' && canCreate) {
+      setEditing(null);
+      setForm(initialForm);
+      setDrawerOpen(true);
+
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('new');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [canCreate, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilters((prev) => ({ ...prev, search: searchInput, page: 1 }));
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const totalPages = useMemo(() => {
     const total = recordsQuery.data?.meta?.total ?? 0;
@@ -95,12 +118,31 @@ export default function RecordsPage() {
   };
 
   const submitForm = async () => {
+    const payload = {
+      ...form,
+      category: form.category.trim(),
+      notes: form.notes.trim(),
+    };
+
+    if (!(payload.amount > 0)) {
+      toast.error('Amount must be a positive number');
+      return;
+    }
+    if (payload.category.length < 2) {
+      toast.error('Category must be at least 2 characters');
+      return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.date)) {
+      toast.error('Date must be in YYYY-MM-DD format');
+      return;
+    }
+
     try {
       if (editing) {
-        await updateMutation.mutateAsync({ id: editing.id, payload: { ...form } });
+        await updateMutation.mutateAsync({ id: editing.id, payload });
         toast.success('Record updated successfully');
       } else {
-        await createMutation.mutateAsync({ ...form });
+        await createMutation.mutateAsync(payload);
         toast.success('Record created successfully');
       }
       setDrawerOpen(false);
@@ -118,15 +160,18 @@ export default function RecordsPage() {
     }
   };
 
-  const importFromFile = async () => {
+  const importFromFile = async (mode: 'replace' | 'append') => {
     if (!importFile) {
       toast.error('Select an import file first');
       return;
     }
 
     try {
-      const result = await importMutation.mutateAsync(importFile);
-      toast.success(`Imported ${result.importedCount} records successfully`);
+      const result = await importMutation.mutateAsync({
+        file: importFile,
+        allowReplaceExisting: mode === 'replace',
+      });
+      toast.success(`${result.message} Imported ${result.importedCount} records.`);
       setImportFile(null);
     } catch (error) {
       const err = error as AxiosError<{ error?: { message?: string } }>;
@@ -167,8 +212,8 @@ export default function RecordsPage() {
           />
           <Input
             placeholder="Search notes/category"
-            value={filters.search}
-            onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
         {canCreate && (
@@ -185,15 +230,23 @@ export default function RecordsPage() {
             <Button
               variant="secondary"
               className="w-full md:w-auto"
-              onClick={importFromFile}
+              onClick={() => importFromFile('replace')}
               disabled={!importFile || importMutation.isPending}
             >
-              {importMutation.isPending ? 'Importing...' : 'Import File'}
+              {importMutation.isPending ? 'Importing...' : 'Import and Replace'}
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full md:w-auto"
+              onClick={() => importFromFile('append')}
+              disabled={!importFile || importMutation.isPending}
+            >
+              {importMutation.isPending ? 'Importing...' : 'Import and Append'}
             </Button>
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          Import supports .xlsx, .xls, .csv, .json with columns: amount, type, category, date, notes. Each import replaces the currently active dataset.
+          Import supports .xlsx, .xls, .csv, .json with columns: amount, type, category, date, notes. Use Replace to archive old data, or Append to add month-over-month data to the same active dataset.
         </p>
       </Card>
 

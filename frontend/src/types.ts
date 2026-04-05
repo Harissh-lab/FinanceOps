@@ -38,6 +38,13 @@ export type Summary = {
   totalExpenses: number;
   netBalance: number;
   recordCount: number;
+  trendWindow?: {
+    label: string;
+    incomeChangePct: number;
+    expenseChangePct: number;
+    netBalanceChangePct: number;
+    savingsRateChangePct: number;
+  };
 };
 
 export type TrendPoint = {

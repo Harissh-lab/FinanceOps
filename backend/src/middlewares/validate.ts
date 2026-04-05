@@ -12,6 +12,8 @@ export function validateRequest(schemas: ValidationSchemas) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     const entries: Array<keyof ValidationSchemas> = ['body', 'query', 'params'];
 
+    const validated = { ...(req.validated ?? {}) } as NonNullable<Request['validated']>;
+
     for (const key of entries) {
       const schema = schemas[key];
       if (!schema) {
@@ -23,8 +25,20 @@ export function validateRequest(schemas: ValidationSchemas) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Request validation failed', result.error.issues);
       }
 
-      (req as any)[key] = result.data;
+      validated[key] = result.data;
+
+      if (key === 'query') {
+        continue;
+      }
+
+      try {
+        (req as any)[key] = result.data;
+      } catch {
+        // Some request properties can be read-only depending on runtime/framework internals.
+      }
     }
+
+    req.validated = validated;
 
     next();
   };

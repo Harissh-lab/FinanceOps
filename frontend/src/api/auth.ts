@@ -18,11 +18,8 @@ export async function logout(): Promise<void> {
   await api.post('/auth/logout', {});
 }
 
-export async function forgotPassword(email: string): Promise<{ message: string; resetToken?: string }> {
-  const response = await api.post<ApiSuccess<{ message: string; resetToken?: string }>>(
-    '/auth/forgot-password',
-    { email },
-  );
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  const response = await api.post<ApiSuccess<{ message: string }>>('/auth/forgot-password', { email });
   return response.data.data;
 }
 

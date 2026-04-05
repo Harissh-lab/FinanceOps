@@ -69,6 +69,32 @@ const riskConfigs: Record<RiskProfile, RiskConfig> = {
   },
 };
 
+const categoryAccentClasses: Record<string, string> = {
+  SALARY: 'border-l-blue-500',
+  RENT: 'border-l-rose-500',
+  FOOD: 'border-l-amber-500',
+  FREELANCE: 'border-l-violet-500',
+  UTILITIES: 'border-l-teal-500',
+  TRANSPORT: 'border-l-slate-500',
+};
+
+const categoryProgressClasses: Record<string, string> = {
+  SALARY: 'bg-blue-500',
+  RENT: 'bg-rose-500',
+  FOOD: 'bg-amber-500',
+  FREELANCE: 'bg-violet-500',
+  UTILITIES: 'bg-teal-500',
+  TRANSPORT: 'bg-slate-500',
+};
+
+function getCategoryAccent(category: string): string {
+  return categoryAccentClasses[category.trim().toUpperCase()] ?? 'border-l-sky-500';
+}
+
+function getCategoryProgress(category: string): string {
+  return categoryProgressClasses[category.trim().toUpperCase()] ?? 'bg-sky-500';
+}
+
 export default function AnalyticsPage() {
   const summary = useSummary();
   const trends = useTrends();
@@ -128,6 +154,11 @@ export default function AnalyticsPage() {
     ];
   }, [suggestedAllocation, riskConfig]);
 
+  const roundedSuggestedPortfolio = useMemo(
+    () => suggestedPortfolio.map((item) => ({ ...item, value: Math.round(item.value) })),
+    [suggestedPortfolio],
+  );
+
   const profitChart = scenarios.map((s) => ({
     scenario: s.name,
     lumpSumProfit: Number(s.profit.toFixed(2)),
@@ -140,6 +171,11 @@ export default function AnalyticsPage() {
     }
     return [...scenarios].sort((a, b) => b.realSipFutureValue - a.realSipFutureValue)[0];
   }, [scenarios]);
+
+  const totalCategoryFlow = useMemo(
+    () => (categories.data ?? []).reduce((sum, category) => sum + category.total, 0),
+    [categories.data],
+  );
 
   if (usableBalance <= 0) {
     return (
@@ -272,7 +308,7 @@ export default function AnalyticsPage() {
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={suggestedPortfolio} dataKey="value" nameKey="name" outerRadius={105} label />
+                <Pie data={roundedSuggestedPortfolio} dataKey="value" nameKey="name" outerRadius={105} label />
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
@@ -329,12 +365,31 @@ export default function AnalyticsPage() {
         ) : (
           <div className="space-y-2">
             {(categories.data ?? []).map((category) => (
-              <div key={category.category} className="rounded-xl border border-border p-3">
+              <div
+                key={category.category}
+                className={`rounded-xl border border-border border-l-[3px] p-3 ${getCategoryAccent(category.category)}`}
+              >
+                {(() => {
+                  const percentage = totalCategoryFlow > 0 ? (category.total / totalCategoryFlow) * 100 : 0;
+
+                  return (
+                    <>
                 <p className="font-semibold">{category.category}</p>
-                <p className="text-sm text-muted-foreground">Total: ${category.total.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">
+                  Total: ${category.total.toLocaleString()} <span className="font-medium">({percentage.toFixed(1)}%)</span>
+                </p>
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full rounded-full ${getCategoryProgress(category.category)}`}
+                    style={{ width: `${Math.min(100, percentage)}%` }}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Income: ${category.income.toLocaleString()} | Expense: ${category.expense.toLocaleString()}
                 </p>
+                    </>
+                  );
+                })()}
               </div>
             ))}
           </div>

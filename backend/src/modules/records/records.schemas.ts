@@ -29,5 +29,16 @@ export const recordListQuerySchema = z.object({
 });
 
 export const importOptionsSchema = z.object({
-  allowReplaceExisting: z.coerce.boolean().optional().default(false),
+  allowReplaceExisting: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .optional()
+    .transform((value) => {
+      if (value === undefined) {
+        return false;
+      }
+      if (typeof value === 'boolean') {
+        return value;
+      }
+      return value === 'true';
+    }),
 });

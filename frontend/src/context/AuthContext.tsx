@@ -7,7 +7,7 @@ type AuthContextType = {
   user: User | null;
   accessToken: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   hasRole: (...roles: Role[]) => boolean;
 };
@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(response.user);
         setAccessTokenState(response.accessToken);
         setAccessToken(response.accessToken);
+        return response.user;
       },
       logout: async () => {
         await logoutApi();

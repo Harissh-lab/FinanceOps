@@ -5,9 +5,9 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
-import { generateOpenApiDocument } from './config/swagger';
+import { generateOpenApiDocument, swaggerSpec } from './config/swagger';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
-import { apiRateLimiter } from './middlewares/rateLimiter';
+import { rateLimiter } from './middlewares/rateLimiter';
 import authRoutes from './modules/auth/auth.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import recordsRoutes from './modules/records/records.routes';
@@ -19,7 +19,6 @@ const configuredOrigins = env.CORS_ORIGIN.split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-app.use(apiRateLimiter);
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -42,12 +41,18 @@ app.use(
   }),
 );
 app.use(helmet());
+app.use(rateLimiter);
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
 
 app.get('/health', (_req, res) => {
   res.status(200).json({ success: true, data: { status: 'ok' } });
+});
+
+app.get('/api/docs-json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
 });
 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(generateOpenApiDocument()));

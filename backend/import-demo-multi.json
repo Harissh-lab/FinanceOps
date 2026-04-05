@@ -1,0 +1,72 @@
+[
+  {
+    "amount": 3200,
+    "type": "INCOME",
+    "category": "Salary",
+    "date": "2025-11-05",
+    "notes": "Monthly salary"
+  },
+  {
+    "amount": 900,
+    "type": "EXPENSE",
+    "category": "Rent",
+    "date": "2025-11-06",
+    "notes": "House rent"
+  },
+  {
+    "amount": 3000,
+    "type": "INCOME",
+    "category": "Salary",
+    "date": "2025-12-05",
+    "notes": "Monthly salary"
+  },
+  {
+    "amount": 450,
+    "type": "EXPENSE",
+    "category": "Groceries",
+    "date": "2025-12-08",
+    "notes": "Food and supplies"
+  },
+  {
+    "amount": 3350,
+    "type": "INCOME",
+    "category": "Salary",
+    "date": "2026-01-05",
+    "notes": "Monthly salary"
+  },
+  {
+    "amount": 600,
+    "type": "EXPENSE",
+    "category": "Utilities",
+    "date": "2026-01-12",
+    "notes": "Electricity and internet"
+  },
+  {
+    "amount": 2800,
+    "type": "INCOME",
+    "category": "Consulting",
+    "date": "2026-02-03",
+    "notes": "Freelance project"
+  },
+  {
+    "amount": 1100,
+    "type": "EXPENSE",
+    "category": "Travel",
+    "date": "2026-02-14",
+    "notes": "Client visit"
+  },
+  {
+    "amount": 3500,
+    "type": "INCOME",
+    "category": "Salary",
+    "date": "2026-03-05",
+    "notes": "Monthly salary"
+  },
+  {
+    "amount": 700,
+    "type": "EXPENSE",
+    "category": "Insurance",
+    "date": "2026-03-18",
+    "notes": "Quarterly payment"
+  }
+]

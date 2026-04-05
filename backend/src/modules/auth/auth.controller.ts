@@ -132,13 +132,12 @@ export async function logout(req: Request, res: Response): Promise<void> {
 
 export async function forgotPassword(req: Request, res: Response): Promise<void> {
   const { email } = req.body as { email: string };
+  const message = 'If an account exists, a reset email has been sent.';
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     // Never reveal if an account exists.
-    sendSuccess(res, {
-      message: 'If the account exists, a reset link has been generated.',
-    });
+    sendSuccess(res, { message });
     return;
   }
 
@@ -154,11 +153,9 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
     `,
   );
 
-  sendSuccess(res, {
-    message: 'If the account exists, a reset link has been generated.',
-    // For local assessment flow, return token in non-production for easy testing.
-    ...(env.NODE_ENV !== 'production' ? { resetToken: rawToken } : {}),
-  });
+  console.log(`[DEV] Password reset token for ${email}: ${rawToken}`);
+
+  sendSuccess(res, { message });
 }
 
 export async function resetPassword(req: Request, res: Response): Promise<void> {

@@ -64,7 +64,13 @@ function parseFileRows(file: Express.Multer.File): Record<string, unknown>[] {
   const extension = file.originalname.split('.').pop()?.toLowerCase() ?? '';
 
   if (extension === 'json' || file.mimetype.includes('application/json')) {
-    const parsed = JSON.parse(file.buffer.toString('utf-8')) as unknown;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(file.buffer.toString('utf-8'));
+    } catch {
+      throw new ApiError(400, 'INVALID_IMPORT_FILE', 'Invalid JSON format in uploaded file');
+    }
+
     if (Array.isArray(parsed)) {
       return parsed as Record<string, unknown>[];
     }
@@ -117,7 +123,7 @@ function normalizeImportedRows(rows: Record<string, unknown>[]): ImportedRow[] {
 }
 
 export async function listRecords(req: Request, res: Response): Promise<void> {
-  const { type, category, startDate, endDate, page, limit, search } = req.query as unknown as {
+  const query = (req.validated?.query ?? req.query) as {
     type?: 'INCOME' | 'EXPENSE';
     category?: string;
     startDate?: Date;
@@ -127,12 +133,16 @@ export async function listRecords(req: Request, res: Response): Promise<void> {
     search?: string;
   };
 
+  const { type, category, startDate, endDate, page, limit, search } = query;
+
+  const normalizedSearch = search?.trim();
+
   const { skip, take } = getPagination(page, limit);
 
   const where: Prisma.FinancialRecordWhereInput = {
     isDeleted: false,
     ...(type ? { type } : {}),
-    ...(category ? { category: { contains: category, mode: 'insensitive' } } : {}),
+    ...(category ? { category: { contains: category } } : {}),
     ...(startDate || endDate
       ? {
           date: {
@@ -141,11 +151,11 @@ export async function listRecords(req: Request, res: Response): Promise<void> {
           },
         }
       : {}),
-    ...(search
+    ...(normalizedSearch
       ? {
           OR: [
-            { notes: { contains: search, mode: 'insensitive' } },
-            { category: { contains: search, mode: 'insensitive' } },
+            { notes: { contains: normalizedSearch } },
+            { category: { contains: normalizedSearch } },
           ],
         }
       : {}),
@@ -240,6 +250,9 @@ export async function importRecords(req: Request, res: Response): Promise<void> 
     throw new ApiError(401, 'UNAUTHORIZED', 'Authentication required');
   }
 
+  const importQuery = (req.validated?.query ?? req.query) as { allowReplaceExisting?: boolean | string };
+  const allowReplaceExisting = importQuery.allowReplaceExisting === true;
+
   const file = req.file;
   if (!file) {
     throw new ApiError(400, 'VALIDATION_ERROR', 'A file is required for import');
@@ -250,30 +263,71 @@ export async function importRecords(req: Request, res: Response): Promise<void> 
     throw new ApiError(400, 'INVALID_IMPORT_FILE', 'Uploaded file has no rows');
   }
 
-  const normalized = normalizeImportedRows(rows);
+  const validRows: ImportedRow[] = [];
+  const validationErrors: Array<{ rowNumber: number; reason: string }> = [];
 
-  await prisma.$transaction([
-    prisma.financialRecord.updateMany({
+  rows.forEach((row, index) => {
+    try {
+      const normalized = normalizeImportedRows([row]);
+      validRows.push(normalized[0]);
+    } catch (error) {
+      const message =
+        error instanceof ApiError ? error.message : 'Invalid row format for amount/type/category/date';
+      validationErrors.push({ rowNumber: index + 1, reason: message });
+    }
+  });
+
+  if (validRows.length === 0) {
+    throw new ApiError(400, 'INVALID_IMPORT_FILE', 'No valid rows found in import file', validationErrors);
+  }
+
+  if (allowReplaceExisting) {
+    await prisma.financialRecord.updateMany({
       where: { isDeleted: false },
       data: { isDeleted: true },
-    }),
-    prisma.financialRecord.createMany({
-      data: normalized.map((row) => ({
-        amount: row.amount,
-        type: row.type,
-        category: row.category,
-        date: row.date,
-        notes: row.notes,
-        createdBy: req.user!.id,
-      })),
-    }),
-  ]);
+    });
+  }
+
+  const persistenceErrors: Array<{ rowNumber: number; reason: string }> = [];
+  let importedCount = 0;
+
+  for (const [index, row] of validRows.entries()) {
+    try {
+      await prisma.financialRecord.create({
+        data: {
+          amount: row.amount,
+          type: row.type,
+          category: row.category,
+          date: row.date,
+          notes: row.notes,
+          createdBy: req.user.id,
+        },
+      });
+      importedCount += 1;
+    } catch (error) {
+      persistenceErrors.push({
+        rowNumber: index + 1,
+        reason: error instanceof Error ? error.message : 'Failed to save row',
+      });
+    }
+  }
+
+  const failedCount = validationErrors.length + persistenceErrors.length;
+  const mode = allowReplaceExisting ? 'replace' : 'append';
 
   sendSuccess(
     res,
     {
-      importedCount: normalized.length,
-      message: 'Records imported successfully. Previous active records were archived.',
+      importedCount,
+      failedCount,
+      mode,
+      errors: [...validationErrors, ...persistenceErrors],
+      message:
+        failedCount > 0
+          ? 'Import completed with partial failures. Check errors for invalid rows.'
+          : mode === 'replace'
+            ? 'Records imported successfully. Previous active records were archived.'
+            : 'Records imported successfully and added to existing active data.',
     },
     201,
   );

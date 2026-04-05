@@ -50,14 +50,22 @@ export async function deleteRecord(id: string): Promise<void> {
   await api.delete(`/records/${id}`);
 }
 
-export async function importRecords(file: File): Promise<{ importedCount: number; message: string }> {
+export async function importRecords(params: {
+  file: File;
+  allowReplaceExisting: boolean;
+}): Promise<{ importedCount: number; mode: 'replace' | 'append'; message: string }> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', params.file);
 
-  const response = await api.post<ApiSuccess<{ importedCount: number; message: string }>>(
+  const response = await api.post<
+    ApiSuccess<{ importedCount: number; mode: 'replace' | 'append'; message: string }>
+  >(
     '/records/import',
     formData,
     {
+      params: {
+        allowReplaceExisting: params.allowReplaceExisting,
+      },
       headers: {
         'Content-Type': 'multipart/form-data',
       },

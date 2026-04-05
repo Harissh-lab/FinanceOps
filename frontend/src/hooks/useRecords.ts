@@ -13,6 +13,9 @@ export function useRecords(filters: RecordFilters) {
   return useQuery({
     queryKey: ['records', filters],
     queryFn: () => getRecords(filters),
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 }
 
@@ -36,7 +39,7 @@ export function useRecordMutations() {
       onSuccess: invalidate,
     }),
     importMutation: useMutation({
-      mutationFn: (file: File) => importRecords(file),
+      mutationFn: (payload: { file: File; allowReplaceExisting: boolean }) => importRecords(payload),
       onSuccess: invalidate,
     }),
   };

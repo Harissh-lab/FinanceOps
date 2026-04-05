@@ -14,6 +14,7 @@ import {
 } from './records.controller';
 import {
   createRecordSchema,
+  importOptionsSchema,
   recordIdParamSchema,
   recordListQuerySchema,
   updateRecordSchema,
@@ -35,7 +36,13 @@ router.get(
   validateRequest({ params: recordIdParamSchema }),
   getRecordById,
 );
-router.post('/import', requireRole(Role.ANALYST, Role.ADMIN), upload.single('file'), importRecords);
+router.post(
+  '/import',
+  requireRole(Role.ANALYST, Role.ADMIN),
+  validateRequest({ query: importOptionsSchema }),
+  upload.single('file'),
+  importRecords,
+);
 router.post(
   '/',
   requireRole(Role.ANALYST, Role.ADMIN),

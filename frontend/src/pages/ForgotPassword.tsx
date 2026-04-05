@@ -27,19 +27,16 @@ type ResetValues = z.infer<typeof resetSchema>;
 
 export default function ForgotPasswordPage() {
   const [serverMessage, setServerMessage] = useState<string | null>(null);
-  const [devToken, setDevToken] = useState<string | null>(null);
 
   const forgotForm = useForm<ForgotValues>({ resolver: zodResolver(forgotSchema) });
   const resetForm = useForm<ResetValues>({ resolver: zodResolver(resetSchema) });
 
   const submitForgot = async (values: ForgotValues) => {
     try {
-      const response = await forgotPassword(values.email);
-      setServerMessage(response.message);
-      setDevToken(response.resetToken ?? null);
+      await forgotPassword(values.email);
+      setServerMessage('If an account with that email exists, a reset link has been sent.');
     } catch {
       setServerMessage('Could not initiate reset at the moment. Try again.');
-      setDevToken(null);
     }
   };
 
@@ -47,7 +44,6 @@ export default function ForgotPasswordPage() {
     try {
       const response = await resetPassword(values);
       setServerMessage(response.message);
-      setDevToken(null);
       resetForm.reset();
     } catch {
       setServerMessage('Reset failed. Token may be invalid or expired.');
@@ -69,11 +65,6 @@ export default function ForgotPasswordPage() {
         </div>
 
         {serverMessage && <p className="rounded-lg bg-muted p-3 text-sm">{serverMessage}</p>}
-        {devToken && (
-          <p className="rounded-lg bg-primary/10 p-3 text-sm text-primary">
-            Dev reset token: <span className="font-mono">{devToken}</span>
-          </p>
-        )}
 
         <div className="grid gap-4 md:grid-cols-2">
           <form onSubmit={forgotForm.handleSubmit(submitForgot)} className="space-y-3 rounded-xl border p-4">

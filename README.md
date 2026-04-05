@@ -1,155 +1,247 @@
-# Finance Data Processing and Access Control Platform
+# FinanceOps — Finance Data Processing & Access Control
 
-Production-ready full-stack finance application with secure role-based access, file import workflows, and interactive analytics. This repository is designed as an assessment-grade project and presented in a recruiter-friendly structure.
+## Overview
+FinanceOps is a full-stack finance operations platform for secure user access, financial record management, and decision-ready analytics. The application provides JWT-based authentication, role-based authorization, import-enabled record workflows, and dashboard insights such as trends, category breakdown, and health scoring. It is built with Node.js, Express, TypeScript, PostgreSQL, Prisma, React, and Vite.
 
-## What This Project Demonstrates
+## Product Preview
+![FinanceOps UI Preview](docs/images/FinanceOps.png)
 
-- Secure authentication with access and refresh tokens
-- Role-based authorization (ADMIN, ANALYST, VIEWER)
-- Financial record CRUD with filtering, pagination, and soft delete
-- Bulk import from JSON, CSV, XLS, XLSX
-- Dashboard analytics (summary, trends, categories, recents)
-- Frontend architecture with protected routes and data-query caching
-- End-to-end backend API tests
+## Live API Documentation
+- Swagger Explore URL: https://app.swaggerhub.com/apis-docs/financeops/financeops-api/1.0.0
+- Swagger UI (local): http://localhost:4000/api/docs
+- API Spec JSON (local): http://localhost:4000/api/docs-json
 
-## Stack
-
+## Tech Stack
 | Layer | Technology |
 |---|---|
-| Backend | Node.js, TypeScript, Express |
+| Runtime | Node.js 18+ |
+| Framework | Express (TypeScript) |
 | Database | PostgreSQL |
 | ORM | Prisma |
-| Auth | JWT (access + refresh), bcrypt |
+| Auth | JWT (access + refresh), bcryptjs |
 | Validation | Zod |
-| API Docs | Swagger UI |
-| Frontend | React, Vite, TypeScript |
+| API Docs | Swagger UI + OpenAPI 3.0 |
+| Frontend | React + Vite + TypeScript |
 | Styling | Tailwind CSS |
 | Charts | Recharts |
-| Data Fetching | TanStack Query + Axios |
+| State Management | React Context + TanStack Query |
+| HTTP Client | Axios |
 | Testing | Jest + Supertest |
 
-## Monorepo Structure
-
+## Project Structure
 ```text
-/
-├── backend/
-│   ├── prisma/
-│   │   ├── schema.prisma
-│   │   ├── seed.ts
-│   │   └── migrations/
-│   ├── src/
-│   │   ├── config/
-│   │   ├── middlewares/
-│   │   ├── modules/
-│   │   │   ├── auth/
-│   │   │   ├── users/
-│   │   │   ├── records/
-│   │   │   └── dashboard/
-│   │   ├── utils/
-│   │   ├── app.ts
-│   │   └── index.ts
-│   ├── tests/
-│   ├── .env.example
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── context/
-│   │   ├── guards/
-│   │   ├── hooks/
-│   │   ├── pages/
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   └── package.json
-├── scripts/
-│   ├── setup-all.ps1
-│   ├── start-all.ps1
-│   └── verify-all.ps1
-├── README.md
-└── methods to run.md
+My company/
+|-- backend/                       # Backend API service (Express + TypeScript)
+|   |-- prisma/                    # Database schema, migrations, and seed scripts
+|   |   |-- migrations/            # Versioned SQL migration history
+|   |   |-- schema.prisma          # Prisma data model (User, records, tokens)
+|   |   `-- seed.ts                # Seeded demo users
+|   |-- src/                       # Backend source code
+|   |   |-- config/                # Env parsing, Prisma client, Swagger spec
+|   |   |-- middlewares/           # Auth, role, validation, upload, rate limiting
+|   |   |-- modules/               # Domain modules (auth/users/records/dashboard)
+|   |   |-- types/                 # Express type augmentation
+|   |   |-- utils/                 # Shared helpers (response, pagination, jwt)
+|   |   |-- app.ts                 # Express app wiring and middleware stack
+|   |   `-- index.ts               # API entrypoint/server start
+|   |-- tests/                     # API integration tests
+|   |-- .env.example               # Environment variable template
+|   `-- package.json               # Backend scripts and dependencies
+|-- frontend/                      # React frontend application
+|   |-- src/                       # Frontend source code
+|   |   |-- api/                   # Axios clients and API wrappers
+|   |   |-- components/            # Layout and reusable UI components
+|   |   |-- context/               # Auth context state
+|   |   |-- guards/                # Protected route + role guard
+|   |   |-- hooks/                 # Data hooks (dashboard, records, users)
+|   |   |-- pages/                 # Route pages (dashboard, analytics, users)
+|   |   |-- App.tsx                # Route graph and role-based navigation
+|   |   `-- main.tsx               # App bootstrap
+|   `-- package.json               # Frontend scripts and dependencies
+|-- scripts/                       # PowerShell automation (setup/start/verify)
+|-- README.md                      # Project overview and setup guide
+|-- APP_RUN_PROCEDURE.md           # Beginner-friendly runbook
+|-- API_REFERENCE.md               # Full API endpoint reference
+`-- CONTRIBUTING.md                # Contribution workflow and conventions
 ```
 
-## API Surface (Summary)
+## Quick Setup
 
-Base URL: `http://localhost:4000`
+### Prerequisites
+- Node.js 18+
+- npm 9+
+- PostgreSQL database (free cloud option below)
 
-- `GET /health`
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `GET /api/users` (ADMIN)
-- `POST /api/users` (ADMIN)
-- `PATCH /api/users/:id` (ADMIN)
-- `DELETE /api/users/:id` (ADMIN)
-- `GET /api/records` (ANALYST, ADMIN)
-- `POST /api/records` (ANALYST, ADMIN)
-- `POST /api/records/import` (ANALYST, ADMIN)
-- `PATCH /api/records/:id` (ADMIN)
-- `DELETE /api/records/:id` (ADMIN)
-- `GET /api/dashboard/summary`
-- `GET /api/dashboard/trends`
-- `GET /api/dashboard/categories`
-- `GET /api/dashboard/recent`
+### Step 1 — Get a free PostgreSQL database
+Instructions for Neon.tech:
+- Go to https://neon.tech and sign up free
+- Create a new project called financeops
+- Copy the connection string
+- Format: postgresql://user:pass@ep-xxx.neon.tech/neondb
 
-Swagger: `http://localhost:4000/api/docs`
+### Step 2 — Clone the repository
+```bash
+git clone https://github.com/financeops/financeops.git
+cd "My company"
+```
 
-## Important Import Behavior
-
-When a new file is imported through `POST /api/records/import`, existing active records are archived first, then imported rows are inserted. This means the latest import becomes the currently active dataset (no unintended accumulation in active view).
-
-## Seed Data
-
-Current seed creates users only (no default financial records):
-
-- admin@finance.com / Admin@123
-- analyst@finance.com / Analyst@123
-- viewer@finance.com / Viewer@123
-
-## PostgreSQL Assets Recruiters Should Check
-
-- Data model: `backend/prisma/schema.prisma`
-- Migration history: `backend/prisma/migrations/`
-- Seed logic: `backend/prisma/seed.ts`
-- Environment template: `backend/.env.example`
-- Local env file: `backend/.env` (not committed)
-
-## Quick Start
-
-See full runbook in `methods to run.md`.
-
-Fast path on Windows PowerShell:
-
+### Step 3 — Configure environment
 ```powershell
-powershell -ExecutionPolicy Bypass -File ./scripts/setup-all.ps1
-powershell -ExecutionPolicy Bypass -File ./scripts/start-all.ps1
+Set-Location .\backend
+Copy-Item .\.env.example .\.env
+```
+Then open .env and fill in the values.
+
+### Step 4 — Generate JWT secrets
+```powershell
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+Use the generated values for:
+- JWT_ACCESS_SECRET
+- JWT_REFRESH_SECRET
+
+### Step 5 — Install and run backend
+```powershell
+npm install
+npx prisma migrate dev --name init
+npm run seed
+npm run dev
 ```
 
-## Quality Checks
+### Step 6 — Install and run frontend
+```powershell
+Set-Location ..\frontend
+npm install
+npm run dev
+```
 
-Backend checks:
+### Step 7 — Open the app
+- Frontend:  http://localhost:5173
+- Backend:   http://localhost:4000/health
+- Swagger:   http://localhost:4000/api/docs
 
+## Seeded Login Credentials
+| Role | Email | Password | Access Level |
+|---|---|---|---|
+| ADMIN | admin@finance.com | Admin@123 | Full access: users, records, dashboard, analytics, reports |
+| ANALYST | analyst@finance.com | Analyst@123 | Records read/create/import, dashboard, analytics, reports |
+| VIEWER | viewer@finance.com | Viewer@123 | Read-only dashboard access |
+
+## Role Permission Matrix
+| Endpoint Group | VIEWER | ANALYST | ADMIN |
+|---|:---:|:---:|:---:|
+| Dashboard | ✓ | ✓ | ✓ |
+| Records (read) | ✗ | ✓ | ✓ |
+| Records (create) | ✗ | ✓ | ✓ |
+| Records (edit/delete) | ✗ | ✗ | ✓ |
+| Users management | ✗ | ✗ | ✓ |
+| Analytics | ✗ | ✓ | ✓ |
+| Reports | ✗ | ✓ | ✓ |
+| Import records | ✗ | ✓ | ✓ |
+
+## API Endpoints
+
+### Auth
+| Method | Path | Auth Required | Role Required | Description |
+|---|---|---|---|---|
+| POST | /api/auth/register | No | Public | Register a new viewer account |
+| POST | /api/auth/login | No | Public | Authenticate and receive access/refresh tokens |
+| POST | /api/auth/refresh | No (refresh token) | Public | Refresh access token using cookie or body token |
+| POST | /api/auth/logout | No (refresh token optional) | Public | Revoke refresh token and clear cookie |
+| POST | /api/auth/forgot-password | No | Public | Start password reset flow with generic response |
+| POST | /api/auth/reset-password | No | Public | Reset password using token + new password |
+
+### Users
+| Method | Path | Auth Required | Role Required | Description |
+|---|---|---|---|---|
+| GET | /api/users | Yes | ADMIN | List users with pagination and search |
+| POST | /api/users | Yes | ADMIN | Create a user |
+| GET | /api/users/:id | Yes | ADMIN | Fetch user by id |
+| PATCH | /api/users/:id | Yes | ADMIN | Update user role or status |
+| DELETE | /api/users/:id | Yes | ADMIN | Delete user |
+
+### Records
+| Method | Path | Auth Required | Role Required | Description |
+|---|---|---|---|---|
+| GET | /api/records | Yes | ANALYST, ADMIN | List records with filters and pagination |
+| POST | /api/records | Yes | ANALYST, ADMIN | Create a financial record |
+| GET | /api/records/:id | Yes | ANALYST, ADMIN | Fetch record by id |
+| PATCH | /api/records/:id | Yes | ADMIN | Update record |
+| DELETE | /api/records/:id | Yes | ADMIN | Delete record |
+| POST | /api/records/import | Yes | ANALYST, ADMIN | Import CSV/XLS/XLSX/JSON records |
+
+### Dashboard
+| Method | Path | Auth Required | Role Required | Description |
+|---|---|---|---|---|
+| GET | /api/dashboard/summary | Yes | Any authenticated | Totals + rolling 30-day trend deltas |
+| GET | /api/dashboard/trends | Yes | Any authenticated | 6-month income vs expense trend points |
+| GET | /api/dashboard/categories | Yes | Any authenticated | Category income/expense breakdown |
+| GET | /api/dashboard/recent | Yes | Any authenticated | Most recent transactions |
+| GET | /api/dashboard/health-score | Yes | Any authenticated | Financial health score and insights |
+
+## Environment Variables
+| Variable | Required | Description | Example |
+|---|---|---|---|
+| NODE_ENV | Yes | Runtime mode used for behavior like rate limiting | development |
+| PORT | Yes | Backend server port | 4000 |
+| DATABASE_URL | Yes | PostgreSQL connection string for Prisma | postgresql://postgres:postgres@localhost:5432/finance_app?schema=public |
+| JWT_ACCESS_SECRET | Yes | Secret used to sign access tokens | 64+ char random string |
+| JWT_REFRESH_SECRET | Yes | Secret used to sign refresh tokens | 64+ char random string |
+| ACCESS_TOKEN_EXPIRES_IN | Yes | Access token lifetime | 15m |
+| REFRESH_TOKEN_EXPIRES_IN_DAYS | Yes | Refresh token lifetime in days | 7 |
+| CORS_ORIGIN | Yes | Comma-separated allowed frontend origins | http://localhost:5173,http://localhost:5174 |
+
+## Testing Password Reset Flow
+1. Go to https://ethereal.email/create and create SMTP test credentials (optional enhancement for email preview).
+2. Add SMTP credentials to your email service integration if you wire Nodemailer in your environment.
+3. In current FinanceOps codebase, trigger forgot password from UI at /forgot-password.
+4. Check backend terminal logs for the reset token line: `[DEV] Password reset token for viewer@finance.com: abc123...`.
+5. Copy token, submit reset-password form with new password, and log in again.
+
+## Running Tests
+Backend test command:
+```powershell
+Set-Location .\backend
+npm run test
+```
+What it covers:
+- auth flow (login/register/refresh/logout behaviors)
+- role-protected access checks
+- records and dashboard API behavior
+- request validation and response envelope expectations
+
+Verification pipeline:
 ```powershell
 Set-Location .\backend
 npm run check
 ```
+This runs TypeScript build + Jest tests.
 
-Frontend build:
+## Features Beyond Requirements
+- Investment Projection Engine with lump sum, SIP, and inflation-adjusted outcomes
+- Financial Health Score endpoint and dashboard card with insights
+- Reports page with snapshot save/apply/delete workflow
+- Multi-format record import (xlsx, xls, csv, json)
+- Forgot password flow with privacy-safe API response and dev token logging
+- Soft delete for financial records with active dataset filtering
+- Configured rate limiting (dev and production tiers)
+- Refresh token lifecycle with persistence and cookie support
+- Role-guarded frontend routes for dashboard, records, analytics, reports, users
+- Exportable OpenAPI JSON endpoint (`/api/docs-json`) for SwaggerHub submission
 
-```powershell
-Set-Location ..\frontend
-npm run build
-```
+## Assumptions and Design Decisions
+- PostgreSQL was selected for strong relational consistency and robust aggregation support.
+- JWT was chosen instead of server sessions for stateless API scaling and clear API-client token flow.
+- Prisma was selected for typed schema evolution, migrations, and safer query ergonomics.
+- Record deletion uses soft delete to preserve historical traceability and prevent destructive loss.
+- Role hierarchy is strict: VIEWER < ANALYST < ADMIN, with users management restricted to ADMIN.
+- Error format is normalized (`success: false` + `error` object) for predictable frontend handling.
+- Rate limiting is relaxed in development (1000/15m) and stricter in production (100/15m).
+- Access token is stored in frontend memory state (not localStorage) to reduce persistent token exposure.
+- Forgot-password API always returns a generic message to avoid account enumeration leakage.
 
-Or run everything:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File ./scripts/verify-all.ps1
-```
-
-## Recruiter Notes
-
-This project highlights backend correctness, API security, role-based controls, practical data import flows, and dashboard-oriented frontend delivery. It is suitable as a portfolio-ready full-stack engineering assessment submission.
+## Known Limitations
+- SMTP email delivery is not fully production-integrated in the current code; dev reset flow uses terminal token logs.
+- HTTPS/TLS termination is not included in this local single-service setup.
+- Deployment topology is single-node by default (no horizontal scaling, queueing, or distributed session concerns).
