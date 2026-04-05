@@ -63,6 +63,7 @@ My company/
 |-- APP_RUN_PROCEDURE.md           # Beginner-friendly runbook
 |-- APP_USER_TUTORIAL.md           # End-to-end UI usage walkthrough
 |-- API_REFERENCE.md               # Full API endpoint reference
+|-- sample-test-data/              # Recruiter-ready import sample files (xlsx/json)
 `-- CONTRIBUTING.md                # Contribution workflow and conventions
 ```
 
